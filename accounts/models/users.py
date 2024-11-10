@@ -43,10 +43,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_verified = models.BooleanField(default=False)
+    
     otp = models.CharField(max_length=6, blank=True, null=True)
     otp_created_at = models.DateTimeField(blank=True, null=True)
     logged = models.BooleanField(default=False, help_text='If otp verification got successful')
     count = models.IntegerField(default=0, help_text='Number of otp sent')
+
+    # Fields for blocking and tracking login attempts
+    login_attempts = models.IntegerField(default=0)
+    otp_attempts = models.IntegerField(default=0)
+    blocked_until = models.DateTimeField(blank=True, null=True)
+
 
     USERNAME_FIELD = 'phone_number'
     REQUIRED_FIELDS = []
@@ -56,5 +63,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = MyUserManager()
 
+    def is_blocked(self):
+        return self.blocked_until and timezone.now() < self.blocked_until
     def __str__(self):
         return self.phone_number

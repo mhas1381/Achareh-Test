@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # packages
+    'rest_framework',
     # apps
     'accounts'
 ]
@@ -126,3 +128,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # user manager config
 AUTH_USER_MODEL = "accounts.User"
+
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
