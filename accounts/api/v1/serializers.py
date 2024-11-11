@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
+import re
 from accounts.models import Profile,validate_phone_number
 
 User = get_user_model()
@@ -54,15 +55,27 @@ class SetPasswordSerializer(serializers.ModelSerializer):
         fields = ['password']
 
     def validate_password(self, value):
-        if len(value) < 6:
-            raise serializers.ValidationError("Password must be at least 6 characters long.")
+        # Check for minimum length
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        
+        # Check for complexity requirements
+        if not re.search(r"[A-Z]", value):
+            raise serializers.ValidationError("Password must contain at least one uppercase letter.")
+        if not re.search(r"[a-z]", value):
+            raise serializers.ValidationError("Password must contain at least one lowercase letter.")
+        if not re.search(r"[0-9]", value):
+            raise serializers.ValidationError("Password must contain at least one digit.")
+        if not re.search(r"[!@#$%^&*()_+={}:;<>?,./]", value):
+            raise serializers.ValidationError("Password must contain at least one special character.")
+        
         return value
 
     def update(self, instance, validated_data):
-        # Set the password
+        # Set the password and mark the user as verified
         password = validated_data['password']
         instance.set_password(password)
-        instance.is_verified = True  # Mark user as verified after setting password
+        instance.is_verified = True
         instance.save()
         return instance
 

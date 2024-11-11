@@ -12,7 +12,8 @@ from django.core.exceptions import ValidationError
 from .serializers import (
     VerifyPhoneOTPModelSerializer, 
     CustomTokenObtainPairSerializer,
-    ProfileSerializer
+    ProfileSerializer,
+    SetPasswordSerializer
 )
 from accounts.models import Profile , validate_phone_number
 from .utils import otp_generator
@@ -133,18 +134,15 @@ class SetPasswordView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        password = request.data.get('password')
-
-        if not password:
-            return Response({"message": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
+        # Use the SetPasswordSerializer to validate the password
+        serializer = SetPasswordSerializer(data=request.data, instance=request.user)
         
-        user = request.user
-        user.set_password(password)
-        user.is_verified = True
-        user.save()
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Password set successfully"}, status=status.HTTP_200_OK)
         
-        return Response({"message": "Password set successfully"}, status=status.HTTP_200_OK)
-
+        # If validation fails, return error response
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginWithPasswordView(APIView):
     """
