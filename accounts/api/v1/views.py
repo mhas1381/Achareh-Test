@@ -81,10 +81,6 @@ class CheckRegistrationView(APIView):
 
                 return Response({
                     "message": "OTP sent successfully. Proceed to verification.",
-                    "tokens": {
-                        "access": access_token,
-                        "refresh": refresh_token
-                    }
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "Failed to send OTP"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -92,7 +88,10 @@ class CheckRegistrationView(APIView):
 class VerifyPhoneOTPView(APIView):
     """
     Verifies OTP for new users to proceed with profile setup.
+    If OTP is valid, returns JWT tokens.
     """
+    permission_classes = [AllowAny]
+
     def post(self, request):
         phone_number = request.data.get('phone_number')
         otp = request.data.get('otp')
@@ -105,13 +104,23 @@ class VerifyPhoneOTPView(APIView):
             
             # Check OTP validity and expiration
             if user.otp == otp and timezone.now() <= user.otp_created_at + timedelta(minutes=5):
-                return Response({"message": "OTP verified. Proceed to set up profile."}, status=status.HTTP_200_OK)
+                # OTP is valid, generate and return tokens
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
+                refresh_token = str(refresh)
+
+                return Response({
+                    "message": "OTP verified. Tokens issued.",
+                    "tokens": {
+                        "access": access_token,
+                        "refresh": refresh_token
+                    }
+                }, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST)
         
         except User.DoesNotExist:
             return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
 
 class ProfileApiView(generics.RetrieveUpdateAPIView):
     """
