@@ -1,8 +1,14 @@
 from django.urls import path
+from ..views import (
+    CheckRegistrationView, 
+    VerifyPhoneOTPView,  
+    SetPasswordView, 
+    LoginWithPasswordView
+)
 
 urlpatterns = [
-    # first sign up step : enter phone number
-    # second sign up step : enter password
-    # login
-    #logout
+    path('check-registration/', CheckRegistrationView.as_view(), name='check-registration'),
+    path('verify-otp/', VerifyPhoneOTPView.as_view(), name='verify-otp'),
+    path('set-password/', SetPasswordView.as_view(), name='set-password'),
+    path('login/', LoginWithPasswordView.as_view(), name='login'),
 ]

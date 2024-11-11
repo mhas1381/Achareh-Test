@@ -1,6 +1,6 @@
 from django.urls import path, include
-
+from ..views import ProfileApiView
 urlpatterns=[
-    # enter firt name and last name
+    path('complete-profile/', ProfileApiView.as_view(), name='complete-profile'),
 
 ]
