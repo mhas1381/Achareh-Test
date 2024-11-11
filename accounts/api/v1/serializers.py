@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
-from accounts.models import Profile
+from accounts.models import Profile,validate_phone_number
+
 User = get_user_model()
 
 class VerifyPhoneOTPModelSerializer(serializers.ModelSerializer):
