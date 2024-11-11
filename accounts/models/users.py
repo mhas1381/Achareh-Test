@@ -5,18 +5,19 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+import re
 
 class MyUserManager(BaseUserManager):
     def create_user(self, phone_number, password=None, **extra_fields):
         if not phone_number:
-            raise ValueError('شماره موبایل باید ثبت شود.')
+            raise ValueError('Phone number is required.')
 
-        phone_number = self.normalize_phone_number(phone_number)
+        
+        user, created = self.model.objects.get_or_create(phone_number=phone_number, defaults={'phone_number': phone_number, **extra_fields})
+        if not created:
+            raise ValueError('This phone number is already registered.')
 
-        if self.model.objects.filter(phone_number=phone_number).exists():
-            raise ValueError('این شماره موبایل قبلا ثبت شده است.')
-
-        user = self.model(phone_number=phone_number, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -26,19 +27,15 @@ class MyUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(phone_number, password, **extra_fields)
 
-    def normalize_phone_number(self, phone_number):
-        phone_number = re.sub(r'\D', '', phone_number)
-        if len(phone_number) == 11 and phone_number.startswith('0'):
-            normalized_number = '+98' + phone_number[1:]
-        elif len(phone_number) == 10 and phone_number.startswith('9'):
-            normalized_number = '+98' + phone_number
-        else:
-            raise ValueError('شماره موبایل معتبر نمی باشد')
-        return normalized_number
+
+def validate_phone_number(value):
+    phone_regex = r'^\+?\d{10,15}$' 
+    if not re.match(phone_regex, value):
+        raise ValidationError("Phone number must be entered in the format: '+989999999'. Up to 15 digits allowed.")
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    phone_number = models.CharField(max_length=15, unique=True)
+    phone_number = models.CharField(max_length=15, unique=True , validators=[validate_phone_number])
     is_superuser = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
